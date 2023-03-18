@@ -1,8 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public enum GameChoices
 {
@@ -16,26 +13,175 @@ public enum GameChoices
 
 public class GameplayController : MonoBehaviour
 {
-    public TextMeshProUGUI AIChoiceText, WinfoText, PlayerScore;
-    private GameChoices player_Choice = GameChoices.NONE, ai_Choice = GameChoices.NONE;
-    private PlayerController playerController;
-    private int score;
+    public static GameplayController instance;
 
-    private void Awake()
+    private GameChoices player_Choice = GameChoices.NONE, ai_Choice = GameChoices.NONE;
+
+    private AnimationController animController;
+    private UIController uiController;
+    private int score;
+    private const string winMsg = "You WIN!", loseMsg = "Game Over! You Lose...", 
+                            tieMsg = "It's a Tie", noneMsg = "Game Over! No Choice Made...";
+    private string roundResult;
+
+    void Awake()
     {
-        //AIChoiceText = AIChoiceText.GetComponent<Text>().text;
-        playerController = GetComponent<PlayerController>();
+        Debug.Log("called game awake");
+        // see instnce calss
+        if (instance == null)
+            instance = this;
+        else return;
+        
+        animController = GetComponent<AnimationController>();
+        uiController = GetComponent<UIController>();
     }
+
     // Start is called before the first frame update
     void Start()
     {
-        SetAIChoice();
+        Debug.Log("called game start");
+        GameStart();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void GameStart()
     {
-        
+        SetAIChoice();
+        animController.PlayAIChoice();
+    }
+
+    private void PlayerMadeChoice()
+    {
+        uiController.SetPlayerChoiceText(player_Choice.ToString());
+        uiController.ChangePlayerSprite(player_Choice);
+
+        //use ui manager
+        uiController.ChangePlayerObjectsState(false);
+        Debug.Log("set de-active");
+
+        animController.DisplayPlayerChoice();
+        Debug.Log("diaplayed player choice");
+    }
+
+    private void ValidateBestscore(int currscore)
+    {
+        Debug.Log("score valid");
+        var bestscore = PlayerPrefs.GetInt("Bestscore");
+        if (currscore > bestscore)
+        {
+            PlayerPrefs.SetInt("Bestscore", currscore);
+        }
+    }
+
+    public void DecideNextRound()
+    {
+        Debug.Log("called decide nextround");
+        uiController.ChangePlayerObjectsState(true);
+        Debug.Log("set active");
+
+        uiController.SetWinMessage("");
+
+        if (score == 0 && roundResult != "It's a Tie")
+        {
+            ValidateBestscore(score);
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
+        }
+
+        else
+        {    
+            GameStart();
+        }
+    }
+
+    public void StartPlayerTimer()
+    {
+        animController.TimerForPlayerChoice();
+    }
+
+    public void DetermineWinner()
+    {
+        if (player_Choice == ai_Choice)
+        {
+            roundResult = tieMsg;
+        }
+
+        else
+        {
+            switch (player_Choice)
+            {
+                case GameChoices.NONE:
+                    roundResult = noneMsg;
+                    score = 0;
+                    break;
+
+                case GameChoices.ROCK:
+                    if (ai_Choice == GameChoices.LIZARD || ai_Choice == GameChoices.SCISSORS)
+                    {
+                        roundResult = winMsg;
+                        score++;
+                    }
+                    else
+                    {
+                        roundResult = loseMsg;
+                        score = 0;
+                    }
+                    break;
+
+                case GameChoices.PAPER:
+                    if (ai_Choice == GameChoices.ROCK || ai_Choice == GameChoices.SPOCK)
+                    {
+                        roundResult = winMsg;
+                        score++;
+                    }
+                    else
+                    {
+                        roundResult = loseMsg;
+                        score = 0;
+                    }
+                    break;
+
+                case GameChoices.SCISSORS:
+                    if (ai_Choice == GameChoices.PAPER || ai_Choice == GameChoices.LIZARD)
+                    {
+                        roundResult = winMsg;
+                        score++;
+                    }
+                    else
+                    {
+                        roundResult = loseMsg;
+                        score = 0;
+                    }
+                    break;
+
+                case GameChoices.LIZARD:
+                    if (ai_Choice == GameChoices.PAPER || ai_Choice == GameChoices.SPOCK)
+                    {
+                        roundResult = winMsg;
+                        score++;
+                    }
+                    else
+                    {
+                        roundResult = loseMsg;
+                        score = 0;
+                    }
+                    break;
+
+                case GameChoices.SPOCK:
+                    if (ai_Choice == GameChoices.ROCK || ai_Choice == GameChoices.SCISSORS)
+                    {
+                        roundResult = winMsg;
+                        score++;
+                    }
+                    else
+                    {
+                        roundResult = loseMsg;
+                        score = 0;
+                    }
+                    break;
+            }
+        }
+
+        ValidateBestscore(uiController.GetPlayerScore());
+        PlayerMadeChoice();
     }
 
     public void SetPlayerChoice(GameChoices playerChoice)
@@ -68,126 +214,36 @@ public class GameplayController : MonoBehaviour
     {
         int rndNum = Random.Range(0, 5);
 
-        switch(rndNum)
+        switch (rndNum)
         {
+            //can use uiman here
             case 0:
                 ai_Choice = GameChoices.ROCK;
-                AIChoiceText.text = "Rock";
                 break;
             case 1:
                 ai_Choice = GameChoices.PAPER;
-                AIChoiceText.text = "Paper";
                 break;
             case 2:
                 ai_Choice = GameChoices.SCISSORS;
-                AIChoiceText.text = "Scissors";
                 break;
             case 3:
                 ai_Choice = GameChoices.LIZARD;
-                AIChoiceText.text = "Lizard";
                 break;
             case 4:
                 ai_Choice = GameChoices.SPOCK;
-                AIChoiceText.text = "Spock";
                 break;
         }
 
-        StartCoroutine(PlayerChoiceCoroutine());
+        uiController.SetAIChoiceText(ai_Choice.ToString());
+        uiController.ChangeAISprite(ai_Choice);
     }
 
-    private IEnumerator PlayerChoiceCoroutine()
+    public void DoReset()
     {
-        yield return new WaitForSeconds(2);
+        uiController.SetWinMessage(roundResult);
+        uiController.SetPlayerScore(score.ToString());
 
-        //ayerController.GetPlayerChoice();
-        if(player_Choice == GameChoices.NONE)
-        {
-            Debug.Log("player not chose any............");
-        }
-        //Debug.Log("player chose: " + player_Choice);
-
-        DetermineWinnerAndRepeat();
-    }
-
-    void DetermineWinnerAndRepeat()
-    {
-        if(player_Choice == ai_Choice)
-        {
-            WinfoText.text = "It's a Tie";
-        }
-
-        if(player_Choice == GameChoices.ROCK)
-        {
-            if(ai_Choice == GameChoices.LIZARD || ai_Choice == GameChoices.SCISSORS)
-            {
-                WinfoText.text = "Player Wins";
-                score++;
-            }
-            else
-            {
-                WinfoText.text = "AI Wins";
-                score = 0;
-            }
-        }
-
-        if(player_Choice == GameChoices.PAPER)
-        {
-            if (ai_Choice == GameChoices.ROCK || ai_Choice == GameChoices.SPOCK)
-            {
-                WinfoText.text = "Player Wins";
-                score++;
-            }
-            else
-            {
-                WinfoText.text = "AI Wins";
-                score = 0;
-            }
-        }
-
-        if (player_Choice == GameChoices.SCISSORS)
-        {
-            if (ai_Choice == GameChoices.PAPER || ai_Choice == GameChoices.LIZARD)
-            {
-                WinfoText.text = "Player Wins";
-                score++;
-            }
-            else
-            {
-                WinfoText.text = "AI Wins";
-                score = 0;
-            }
-        }
-
-        if (player_Choice == GameChoices.LIZARD)
-        {
-            if (ai_Choice == GameChoices.PAPER || ai_Choice == GameChoices.SPOCK)
-            {
-                WinfoText.text = "Player Wins";
-                score++;
-            }
-            else
-            {
-                WinfoText.text = "AI Wins";
-                score = 0;
-            }
-        }
-
-        if (player_Choice == GameChoices.SPOCK)
-        {
-            if (ai_Choice == GameChoices.ROCK || ai_Choice == GameChoices.SCISSORS)
-            {
-                WinfoText.text = "Player Wins";
-                score++;
-            }
-            else
-            {
-                WinfoText.text = "AI Wins";
-                score = 0;
-            }
-        }
-
-        PlayerScore.text = score.ToString();
+        animController.ResetAnimations();
         player_Choice = GameChoices.NONE;
-        SetAIChoice();
     }
 }

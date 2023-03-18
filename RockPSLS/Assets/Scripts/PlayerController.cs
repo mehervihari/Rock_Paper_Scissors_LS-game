@@ -6,10 +6,12 @@ using UnityEngine.UI;
 public class PlayerController : MonoBehaviour
 {
     private GameplayController gameplayController;
+    private AnimationController animController;
 
     private void Awake()
     {
         gameplayController = GetComponent<GameplayController>();
+        animController = GetComponent<AnimationController>();
     }
     // Start is called before the first frame update
     void Start()
