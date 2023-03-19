@@ -1,30 +1,23 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+/*  
+    This class is responsible for controlling the Player.
+    It includes the actions that can be done by the player.
+*/
+
 public class PlayerController : MonoBehaviour
 {
+    // reference to GameplayController singleton class
     private GameplayController gameplayController;
-    private AnimationController animController;
 
-    private void Awake()
-    {
-        gameplayController = GetComponent<GameplayController>();
-        animController = GetComponent<AnimationController>();
-    }
-    // Start is called before the first frame update
+    // awake is called when the script instance is loaded
     void Start()
     {
-        
+        gameplayController = GameplayController.instance;
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
+    // function that's called when the player chooses any of the given choices/ options by clicking on the UI
     public void GetPlayerChoice()
     {
         string choiceName = UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject.name;

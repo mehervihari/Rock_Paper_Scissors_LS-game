@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+// enum to maintain the different choices that can be made by players
 public enum GameChoices
 {
     NONE,
@@ -11,23 +12,38 @@ public enum GameChoices
     SPOCK
 }
 
+/*  
+    This class is responsible for the actual game logic and gameplay.
+    It controlls the game and the sequence of events in it.
+    This is a singeton class.
+*/
+
 public class GameplayController : MonoBehaviour
 {
     public static GameplayController instance;
 
+    // reference for AnimationController class
+    private AnimationController animController;
+
+    // reference for UIController class
+    private UIController uiController;
+
+    // Choices made by player and AI
     private GameChoices player_Choice = GameChoices.NONE, ai_Choice = GameChoices.NONE;
 
-    private AnimationController animController;
-    private UIController uiController;
+    // variable to maintain the player score
     private int score;
+
+    // different winning messages for any game round
     private const string winMsg = "You WIN!", loseMsg = "Game Over! You Lose...", 
                             tieMsg = "It's a Tie", noneMsg = "Game Over! No Choice Made...";
+
+    // variable to put the result of the current game round
     private string roundResult;
 
+    // awake is called when the script instance is loaded
     void Awake()
     {
-        Debug.Log("called game awake");
-        // see instnce calss
         if (instance == null)
             instance = this;
         else return;
@@ -39,32 +55,29 @@ public class GameplayController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Debug.Log("called game start");
         GameStart();
     }
 
+    // function that actually starts the game
     private void GameStart()
     {
         SetAIChoice();
         animController.PlayAIChoice();
     }
 
+    // function that is called when player makes a choice
     private void PlayerMadeChoice()
     {
         uiController.SetPlayerChoiceText(player_Choice.ToString());
         uiController.ChangePlayerSprite(player_Choice);
-
-        //use ui manager
         uiController.ChangePlayerObjectsState(false);
-        Debug.Log("set de-active");
 
         animController.DisplayPlayerChoice();
-        Debug.Log("diaplayed player choice");
     }
 
+    // function to update the best/ highest score of the player
     private void ValidateBestscore(int currscore)
     {
-        Debug.Log("score valid");
         var bestscore = PlayerPrefs.GetInt("Bestscore");
         if (currscore > bestscore)
         {
@@ -72,18 +85,16 @@ public class GameplayController : MonoBehaviour
         }
     }
 
+    // function that decides whether next round can be continued or not
     public void DecideNextRound()
     {
-        Debug.Log("called decide nextround");
         uiController.ChangePlayerObjectsState(true);
-        Debug.Log("set active");
-
         uiController.SetWinMessage("");
 
         if (score == 0 && roundResult != "It's a Tie")
         {
             ValidateBestscore(score);
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
+            SceneManager.LoadScene("MainMenu");
         }
 
         else
@@ -92,11 +103,13 @@ public class GameplayController : MonoBehaviour
         }
     }
 
+    // function that calls the timer animation
     public void StartPlayerTimer()
     {
         animController.TimerForPlayerChoice();
     }
 
+    // function that determines the winner of the current game round
     public void DetermineWinner()
     {
         if (player_Choice == ai_Choice)
@@ -184,6 +197,7 @@ public class GameplayController : MonoBehaviour
         PlayerMadeChoice();
     }
 
+    // function to set the choice of the player
     public void SetPlayerChoice(GameChoices playerChoice)
     {
         switch (playerChoice)
@@ -210,13 +224,13 @@ public class GameplayController : MonoBehaviour
         }
     }
 
+    // function to set the choice of AI (computer)
     public void SetAIChoice()
     {
         int rndNum = Random.Range(0, 5);
 
         switch (rndNum)
         {
-            //can use uiman here
             case 0:
                 ai_Choice = GameChoices.ROCK;
                 break;
@@ -238,6 +252,7 @@ public class GameplayController : MonoBehaviour
         uiController.ChangeAISprite(ai_Choice);
     }
 
+    // function to reset few things before proceeding to next game round
     public void DoReset()
     {
         uiController.SetWinMessage(roundResult);
