@@ -10,10 +10,15 @@ My git repo also contains some of my other projects like
 	Data parser: a unity application to parse webcontent
 	Mission DSA: includes my solutions to various Data Structures & Algorithmic questions that I have worked and solved on popular platfomrs like
 	https://auth.geeksforgeeks.org/user/mehervihari97/
+	
 	https://www.scaler.com/academy/mentee-dashboard/problems
 
+### Demo video
+A demo video that showcases the game play (on an android device) have been attached.
+https://github.com/mehervihari/Rock_Paper_Scissors_LS-game
+
 ## Game improvement:
-Inorder to make the game more involving and exciting, i would love to extend it by adding some animations like a scissors cutting down the paper, rock beaating thr scissors etc
+Inorder to make the game more involving and exciting, i would love to extend it by adding some animations like a scissors cutting down the paper, rock beaating the scissors etc
 along with typical immersive sounds.
 
 ## Sources used:
